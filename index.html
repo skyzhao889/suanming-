@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>紫微命盘·天机测算</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0d0221 0%, #1a0533 40%, #0d1a33 100%);
+      font-family: 'Ma Shan Zheng', '楷体', KaiTi, serif;
+      color: #f0d080;
+      overflow-x: hidden;
+    }
+
+    /* 星空背景 */
+    .stars {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .star {
+      position: absolute;
+      background: #fff;
+      border-radius: 50%;
+      animation: twinkle var(--dur, 3s) infinite ease-in-out;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.2; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.4); }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 30px 20px 60px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .header .title-icon {
+      font-size: 52px;
+      display: block;
+      margin-bottom: 8px;
+      animation: float 4s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    .header h1 {
+      font-size: 30px;
+      letter-spacing: 6px;
+      color: #ffd700;
+      text-shadow: 0 0 20px rgba(255,215,0,0.6), 0 0 40px rgba(255,180,0,0.3);
+    }
+    .header p {
+      font-size: 14px;
+      color: #c8a060;
+      margin-top: 6px;
+      letter-spacing: 2px;
+    }
+
+    /* 卡片 */
+    .card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      border-radius: 20px;
+      padding: 28px 24px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+
+    .card-title {
+      font-size: 18px;
+      color: #ffd700;
+      letter-spacing: 3px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title::before, .card-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(255,215,0,0.4), transparent);
+    }
+
+    /* 表单 */
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      color: #d4a840;
+      margin-bottom: 8px;
+      letter-spacing: 2px;
+    }
+    .form-group label span {
+      color: #ff6b6b;
+      margin-left: 2px;
+    }
+    .form-control {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,215,0,0.25);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 16px;
+      font-family: inherit;
+      color: #f5e6c8;
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .form-control:focus {
+      border-color: rgba(255,215,0,0.7);
+      box-shadow: 0 0 0 3px rgba(255,215,0,0.1);
+    }
+    .form-control::placeholder { color: rgba(255,215,0,0.3); }
+    select.form-control option {
+      background: #1a0533;
+      color: #f5e6c8;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* 提交按钮 */
+    .btn-fortune {
+      width: 100%;
+      margin-top: 24px;
+      padding: 16px;
+      background: linear-gradient(135deg, #b8860b, #ffd700, #b8860b);
+      background-size: 200% auto;
+      border: none;
+      border-radius: 50px;
+      font-size: 18px;
+      font-family: inherit;
+      color: #1a0533;
+      font-weight: bold;
+      letter-spacing: 4px;
+      cursor: pointer;
+      animation: shimmer 3s linear infinite;
+      box-shadow: 0 4px 20px rgba(255,215,0,0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-fortune:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(255,215,0,0.5);
+    }
+    .btn-fortune:active { transform: translateY(0); }
+    @keyframes shimmer {
+      0% { background-position: 0% center; }
+      100% { background-position: 200% center; }
+    }
+
+    /* 加载动画 */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 40px 0;
+    }
+    .loading.show { display: block; }
+    .loading-circle {
+      width: 60px; height: 60px;
+      border: 3px solid rgba(255,215,0,0.2);
+      border-top-color: #ffd700;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading p { color: #d4a840; letter-spacing: 2px; font-size: 15px; animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
+
+    /* 结果区 */
+    .result-section {
+      display: none;
+      margin-top: 28px;
+      animation: fadeInUp 0.8s ease;
+    }
+    .result-section.show { display: block; }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .result-name {
+      font-size: 22px;
+      color: #ffd700;
+      letter-spacing: 4px;
+    }
+    .result-meta {
+      font-size: 13px;
+      color: #a08040;
+      margin-top: 4px;
+      letter-spacing: 1px;
+    }
+
+    /* 五行能量条 */
+    .wuxing-section { margin-bottom: 20px; }
+    .wuxing-title { font-size: 15px; color: #d4a840; letter-spacing: 2px; margin-bottom: 12px; }
+    .wuxing-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 10px;
+    }
+    .wuxing-label {
+      width: 28px; font-size: 15px; text-align: center;
+    }
+    .wuxing-bar-bg {
+      flex: 1; height: 8px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 4px; overflow: hidden;
+    }
+    .wuxing-bar {
+      height: 100%; border-radius: 4px;
+      transition: width 1.5s ease;
+      width: 0;
+    }
+    .wuxing-pct { font-size: 13px; color: #a08040; width: 36px; text-align: right; }
+
+    /* 命盘格 */
+    .destiny-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .destiny-item {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,215,0,0.15);
+      border-radius: 12px;
+      padding: 14px 12px;
+      text-align: center;
+    }
+    .destiny-item .d-label { font-size: 12px; color: #a08040; letter-spacing: 1px; margin-bottom: 6px; }
+    .destiny-item .d-value { font-size: 20px; color: #ffd700; letter-spacing: 2px; }
+    .destiny-item .d-sub { font-size: 12px; color: #c8a060; margin-top: 4px; }
+
+    /* 运势分析块 */
+    .fortune-block {
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 14px;
+      border: 1px solid rgba(255,215,0,0.1);
+      background: rgba(255,255,255,0.03);
+    }
+    .fortune-block .block-title {
+      font-size: 15px;
+      color: #ffd700;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .fortune-block .block-text {
+      font-size: 14px;
+      color: #d4c090;
+      line-height: 1.9;
+      letter-spacing: 1px;
+    }
+
+    /* 总运评分 */
+    .score-ring {
+      text-align: center;
+      margin: 16px 0 20px;
+    }
+    .score-ring svg { width: 110px; height: 110px; }
+    .score-ring .score-num {
+      font-size: 32px;
+      color: #ffd700;
+      display: block;
+      margin-top: 8px;
+      letter-spacing: 2px;
+    }
+    .score-ring .score-label { font-size: 13px; color: #a08040; letter-spacing: 1px; }
+
+    /* 吉言 */
+    .lucky-words {
+      text-align: center;
+      padding: 20px;
+      border: 1px dashed rgba(255,215,0,0.3);
+      border-radius: 14px;
+      margin-top: 16px;
+    }
+    .lucky-words .lw-title { font-size: 13px; color: #a08040; letter-spacing: 2px; margin-bottom: 10px; }
+    .lucky-words .lw-text { font-size: 17px; color: #ffd700; letter-spacing: 3px; line-height: 2; }
+
+    /* 重测按钮 */
+    .btn-reset {
+      display: block;
+      width: 100%;
+      margin-top: 24px;
+      padding: 13px;
+      background: transparent;
+      border: 1px solid rgba(255,215,0,0.35);
+      border-radius: 50px;
+      font-size: 15px;
+      font-family: inherit;
+      color: #d4a840;
+      letter-spacing: 3px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-reset:hover {
+      background: rgba(255,215,0,0.08);
+      border-color: rgba(255,215,0,0.6);
+      color: #ffd700;
+    }
+
+    /* 分段标题 */
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 22px 0 16px;
+      font-size: 13px;
+      color: #a08040;
+      letter-spacing: 2px;
+    }
+    .section-divider::before, .section-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255,215,0,0.15);
+    }
+
+    /* 标签选择器（多选/单选） */
+    .tag-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .tag-btn {
+      padding: 7px 14px;
+      border: 1px solid rgba(255,215,0,0.25);
+      border-radius: 20px;
+      background: rgba(255,255,255,0.04);
+      color: #c8a060;
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.25s;
+      letter-spacing: 1px;
+    }
+    .tag-btn:hover { border-color: rgba(255,215,0,0.5); color: #ffd700; }
+    .tag-btn.active {
+      background: rgba(255,215,0,0.15);
+      border-color: #ffd700;
+      color: #ffd700;
+      box-shadow: 0 0 8px rgba(255,215,0,0.2);
+    }
+
+    /* 星座徽章 */
+    .zodiac-badge {
+      display: inline-block;
+      background: rgba(255,215,0,0.12);
+      border: 1px solid rgba(255,215,0,0.3);
+      border-radius: 8px;
+      padding: 4px 12px;
+      font-size: 14px;
+      color: #ffd700;
+      letter-spacing: 1px;
+      margin-top: 8px;
+    }
+
+    /* 数字滑块 */
+    .range-wrap { display: flex; align-items: center; gap: 12px; }
+    .range-wrap input[type=range] {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 4px;
+      border-radius: 2px;
+      background: linear-gradient(to right, #ffd700 var(--pct,50%), rgba(255,255,255,0.1) var(--pct,50%));
+      outline: none;
+      cursor: pointer;
+    }
+    .range-wrap input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: #ffd700;
+      box-shadow: 0 0 6px rgba(255,215,0,0.6);
+      cursor: pointer;
+    }
+    .range-val {
+      min-width: 36px; text-align: center;
+      font-size: 15px; color: #ffd700;
+    }
+
+    /* 结果里的额外块 */
+    .extra-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .extra-item {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,215,0,0.12);
+      border-radius: 12px;
+      padding: 12px 8px;
+      text-align: center;
+    }
+    .extra-item .ei-icon { font-size: 22px; margin-bottom: 4px; }
+    .extra-item .ei-label { font-size: 11px; color: #a08040; letter-spacing: 1px; }
+    .extra-item .ei-val { font-size: 14px; color: #ffd700; margin-top: 4px; letter-spacing: 1px; }
+
+    /* 底部 */
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 12px;
+      color: rgba(200,160,96,0.4);
+      letter-spacing: 2px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- 星空 -->
+<div class="stars" id="stars"></div>
+
+<div class="container">
+  <!-- 头部 -->
+  <div class="header">
+    <span class="title-icon">☯️</span>
+    <h1>天机测算</h1>
+    <p>紫微斗数 · 八字命理 · 运势详解</p>
+  </div>
+
+  <!-- 输入表单 -->
+  <div class="card" id="formCard">
+    <div class="card-title">填写生辰信息</div>
+
+    <!-- ① 基本信息 -->
+    <div class="section-divider">基本信息</div>
+
+    <div class="form-group">
+      <label>姓名 <span>*</span></label>
+      <input type="text" id="name" class="form-control" placeholder="请输入您的姓名" maxlength="10" />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>年龄 <span>*</span></label>
+        <input type="number" id="age" class="form-control" placeholder="岁" min="1" max="120" />
+      </div>
+      <div class="form-group">
+        <label>性别 <span>*</span></label>
+        <select id="gender" class="form-control">
+          <option value="">请选择</option>
+          <option value="男">男</option>
+          <option value="女">女</option>
+          <option value="保密">保密</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>出生日期 <span>*</span></label>
+      <input type="date" id="birthday" class="form-control" onchange="autoZodiac()" />
+      <div id="zodiacBadge"></div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>出生时辰 <span>*</span></label>
+        <select id="shichen" class="form-control">
+          <option value="">请选择时辰</option>
+          <option value="子">子时（23:00-00:59）</option>
+          <option value="丑">丑时（01:00-02:59）</option>
+          <option value="寅">寅时（03:00-04:59）</option>
+          <option value="卯">卯时（05:00-06:59）</option>
+          <option value="辰">辰时（07:00-08:59）</option>
+          <option value="巳">巳时（09:00-10:59）</option>
+          <option value="午">午时（11:00-12:59）</option>
+          <option value="未">未时（13:00-14:59）</option>
+          <option value="申">申时（15:00-16:59）</option>
+          <option value="酉">酉时（17:00-18:59）</option>
+          <option value="戌">戌时（19:00-20:59）</option>
+          <option value="亥">亥时（21:00-22:59）</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>血型</label>
+        <select id="bloodtype" class="form-control">
+          <option value="">不清楚</option>
+          <option value="A">A型</option>
+          <option value="B">B型</option>
+          <option value="O">O型</option>
+          <option value="AB">AB型</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>出生地</label>
+      <input type="text" id="birthplace" class="form-control" placeholder="如：北京市 / 上海市" maxlength="20" />
+    </div>
+
+    <!-- ② 生活状态 -->
+    <div class="section-divider">生活状态</div>
+
+    <div class="form-group">
+      <label>职业方向</label>
+      <div class="tag-group" id="tagJob">
+        <button class="tag-btn" onclick="toggleTag(this,'job')">💻 互联网</button>
+        <button class="tag-btn" onclick="toggleTag(this,'job')">📚 教育</button>
+        <button class="tag-btn" onclick="toggleTag(this,'job')">🏥 医疗</button>
+        <button class="tag-btn" onclick="toggleTag(this,'job')">🎨 创意</button>
+        <button class="tag-btn" onclick="toggleTag(this,'job')">💰 金融</button>
+        <button class="tag-btn" onclick="toggleTag(this,'job')">🏗️ 建筑</button>
+        <button class="tag-btn" onclick="toggleTag(this,'job')">🎭 演艺</button>
+        <button class="tag-btn" onclick="toggleTag(this,'job')">🔬 科研</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>教育程度</label>
+      <select id="education" class="form-control">
+        <option value="">请选择</option>
+        <option value="高中及以下">高中及以下</option>
+        <option value="大专">大专</option>
+        <option value="本科">本科</option>
+        <option value="硕士">硕士</option>
+        <option value="博士及以上">博士及以上</option>
+      </select>
+    </div>
+
+    <!-- ③ 近期关注 -->
+    <div class="section-divider">近期关注</div>
+
+    <div class="form-group">
+      <label>本次最想测算的方向（可多选）</label>
+      <div class="tag-group" id="tagFocus">
+        <button class="tag-btn" onclick="toggleTag(this,'focus')">💼 事业运</button>
+        <button class="tag-btn" onclick="toggleTag(this,'focus')">❤️ 感情运</button>
+        <button class="tag-btn" onclick="toggleTag(this,'focus')">💰 财运</button>
+        <button class="tag-btn" onclick="toggleTag(this,'focus')">🌿 健康运</button>
+        <button class="tag-btn" onclick="toggleTag(this,'focus')">🎓 学业运</button>
+        <button class="tag-btn" onclick="toggleTag(this,'focus')">🌍 出行运</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>近期主要困扰</label>
+      <div class="tag-group" id="tagWorry">
+        <button class="tag-btn" onclick="toggleTag(this,'worry')">😰 工作压力</button>
+        <button class="tag-btn" onclick="toggleTag(this,'worry')">💸 财务紧张</button>
+        <button class="tag-btn" onclick="toggleTag(this,'worry')">💔 感情不顺</button>
+        <button class="tag-btn" onclick="toggleTag(this,'worry')">😴 身心疲惫</button>
+        <button class="tag-btn" onclick="toggleTag(this,'worry')">🤝 人际关系</button>
+        <button class="tag-btn" onclick="toggleTag(this,'worry')">🔀 方向迷茫</button>
+      </div>
+    </div>
+
+    <!-- ④ 性格自评 -->
+    <div class="section-divider">性格自评</div>
+
+    <div class="form-group">
+      <label>性格倾向</label>
+      <div class="tag-group" id="tagPersona">
+        <button class="tag-btn" onclick="toggleTag(this,'persona')">🌙 内向</button>
+        <button class="tag-btn" onclick="toggleTag(this,'persona')">☀️ 外向</button>
+        <button class="tag-btn" onclick="toggleTag(this,'persona')">🎯 理性</button>
+        <button class="tag-btn" onclick="toggleTag(this,'persona')">🎨 感性</button>
+        <button class="tag-btn" onclick="toggleTag(this,'persona')">📋 计划型</button>
+        <button class="tag-btn" onclick="toggleTag(this,'persona')">🌊 随性型</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>近一年整体状态自评
+        <span style="color:#a08040;font-size:12px;">（1=很差，10=很好）</span>
+      </label>
+      <div class="range-wrap">
+        <input type="range" id="selfScore" min="1" max="10" value="6"
+          oninput="updateRange(this,'selfScoreVal')" />
+        <span class="range-val" id="selfScoreVal">6</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>当前财务压力
+        <span style="color:#a08040;font-size:12px;">（1=轻松，10=极大）</span>
+      </label>
+      <div class="range-wrap">
+        <input type="range" id="moneyPressure" min="1" max="10" value="5"
+          oninput="updateRange(this,'moneyPressureVal')" />
+        <span class="range-val" id="moneyPressureVal">5</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>补充心愿（可选）</label>
+      <textarea id="wish" class="form-control" rows="2"
+        placeholder="写下您最近的一个心愿或困惑，天机将为您指引…" maxlength="80"
+        style="resize:none;line-height:1.8;"></textarea>
+    </div>
+
+    <!-- 加载中 -->
+    <div class="loading" id="loading">
+      <div class="loading-circle"></div>
+      <p>天机运转中，请稍候…</p>
+    </div>
+
+    <button class="btn-fortune" id="btnFortune" onclick="startFortune()">✨ 开始测算 ✨</button>
+  </div>
+
+  <!-- 结果区 -->
+  <div class="result-section" id="resultSection">
+    <div class="card">
+      <div class="result-header">
+        <div class="result-name" id="resName"></div>
+        <div class="result-meta" id="resMeta"></div>
+      </div>
+
+      <!-- 总运评分环 -->
+      <div class="score-ring">
+        <svg viewBox="0 0 110 110">
+          <circle cx="55" cy="55" r="46" fill="none" stroke="rgba(255,215,0,0.1)" stroke-width="8"/>
+          <circle id="scoreArc" cx="55" cy="55" r="46" fill="none"
+            stroke="url(#goldGrad)" stroke-width="8"
+            stroke-linecap="round"
+            stroke-dasharray="289"
+            stroke-dashoffset="289"
+            transform="rotate(-90 55 55)"
+            style="transition: stroke-dashoffset 2s ease;"/>
+          <defs>
+            <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#b8860b"/>
+              <stop offset="100%" stop-color="#ffd700"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <span class="score-num" id="scoreNum">--</span>
+        <span class="score-label">综合运势评分</span>
+      </div>
+
+      <!-- 命盘四柱 -->
+      <div class="card-title">四柱八字</div>
+      <div class="destiny-grid" id="destinyGrid"></div>
+
+      <!-- 额外信息行 -->
+      <div class="extra-row" id="extraRow"></div>
+
+      <!-- 五行 -->
+      <div class="wuxing-section">
+        <div class="wuxing-title">五行能量分布</div>
+        <div id="wuxingBars"></div>
+      </div>
+
+      <!-- 运势分析 -->
+      <div class="card-title">命理详解</div>
+      <div id="fortuneBlocks"></div>
+
+      <!-- 吉言 -->
+      <div class="lucky-words">
+        <div class="lw-title">✦ 今日吉言 ✦</div>
+        <div class="lw-text" id="luckyWords"></div>
+      </div>
+
+      <button class="btn-reset" onclick="resetForm()">↺ 重新测算</button>
+    </div>
+  </div>
+
+  <div class="footer">
+    本测算仅供娱乐参考，切勿当真 · 天机不可全泄
+  </div>
+</div>
+
+<script>
+  // ========== 星空生成 ==========
+  (function() {
+    const stars = document.getElementById('stars');
+    for (let i = 0; i < 120; i++) {
+      const s = document.createElement('div');
+      s.className = 'star';
+      const size = Math.random() * 2.5 + 0.5;
+      s.style.cssText = `
+        width:${size}px; height:${size}px;
+        left:${Math.random()*100}%;
+        top:${Math.random()*100}%;
+        --dur:${(Math.random()*4+2).toFixed(1)}s;
+        animation-delay:${(Math.random()*5).toFixed(1)}s;
+      `;
+      stars.appendChild(s);
+    }
+  })();
+
+  // ========== 工具函数 ==========
+  // 标签单/多选
+  const tagGroups = { love: false, job: false, focus: true, worry: true, persona: true };
+  function toggleTag(btn, group) {
+    const multi = tagGroups[group];
+    if (!multi) {
+      // 单选
+      btn.closest('.tag-group').querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+    }
+    btn.classList.toggle('active');
+  }
+  function getTagValues(groupId) {
+    return [...document.querySelectorAll(`#${groupId} .tag-btn.active`)].map(b => b.textContent.replace(/^[\S]{1,2}\s/,'').trim());
+  }
+
+  // 滑块
+  function updateRange(el, valId) {
+    document.getElementById(valId).textContent = el.value;
+    const pct = (el.value - el.min) / (el.max - el.min) * 100;
+    el.style.setProperty('--pct', pct + '%');
+  }
+  // 初始化滑块显示
+  document.querySelectorAll('input[type=range]').forEach(el => updateRange(el, el.id + 'Val'));
+
+  // ========== 星座计算 ==========
+  const zodiacList = [
+    { name:'摩羯座',icon:'♑',end:[1,19] },
+    { name:'水瓶座',icon:'♒',end:[2,18] },
+    { name:'双鱼座',icon:'♓',end:[3,20] },
+    { name:'白羊座',icon:'♈',end:[4,19] },
+    { name:'金牛座',icon:'♉',end:[5,20] },
+    { name:'双子座',icon:'♊',end:[6,20] },
+    { name:'巨蟹座',icon:'♋',end:[7,22] },
+    { name:'狮子座',icon:'♌',end:[8,22] },
+    { name:'处女座',icon:'♍',end:[9,22] },
+    { name:'天秤座',icon:'♎',end:[10,22] },
+    { name:'天蝎座',icon:'♏',end:[11,21] },
+    { name:'射手座',icon:'♐',end:[12,21] },
+    { name:'摩羯座',icon:'♑',end:[12,31] },
+  ];
+  function getZodiac(month, day) {
+    for (const z of zodiacList) {
+      if (month < z.end[0] || (month === z.end[0] && day <= z.end[1])) return z;
+    }
+    return zodiacList[0];
+  }
+  function autoZodiac() {
+    const val = document.getElementById('birthday').value;
+    if (!val) { document.getElementById('zodiacBadge').innerHTML = ''; return; }
+    const [, m, d] = val.split('-').map(Number);
+    const z = getZodiac(m, d);
+    document.getElementById('zodiacBadge').innerHTML = `<span class="zodiac-badge">${z.icon} ${z.name}</span>`;
+  }
+
+  // 中文生肖
+  const shengxiao = ['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'];
+  function getSx(year) { return shengxiao[(year - 4) % 12]; }
+
+  // ========== 命理数据 ==========
+  const tianGan = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+  const diZhi = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+  const wuxingMap = { '甲':'木','乙':'木','丙':'火','丁':'火','戊':'土','己':'土','庚':'金','辛':'金','壬':'水','癸':'水' };
+  const diZhiWuxing = { '子':'水','丑':'土','寅':'木','卯':'木','辰':'土','巳':'火','午':'火','未':'土','申':'金','酉':'金','戌':'土','亥':'水' };
+  const wuxingColors = { '木':'#4caf50','火':'#ff5722','土':'#ff9800','金':'#ffc107','水':'#2196f3' };
+  const wuxingIcons = { '木':'🌿','火':'🔥','土':'🏔️','金':'⚡','水':'💧' };
+
+  // 血型分析
+  const bloodMap = {
+    'A': '性格细腻，凡事认真，本年宜专注深耕，切忌分散精力，贵人多从工作中来。',
+    'B': '思维活跃，随性洒脱，本年偏财运旺，善用创意可开辟新局面，注意坚持。',
+    'O': '行动力强，执行到位，本年事业有贵人提携，宜主动出击，健康需防劳累过度。',
+    'AB': '双面性格，理性与感性兼具，本年适合转型探索，感情运平稳，宜深化关系。',
+  };
+
+  // 困扰对应化解建议
+  const worryAdvice = {
+    '工作压力': '官星旺盛，压力虽大，但亦是成长之机。宜以「柔」化「刚」，适当放权，借助贵人之力化解职场困局。',
+    '财务紧张': '财星暂入休地，此乃蓄财之期。开源节流并行，勿轻信偏财之机，踏实积累方为正道。',
+    '感情不顺': '桃花运稍有波折，乃磁场调整之兆。保持自身能量，吸引力法则必将带来新的缘分。',
+    '身心疲惫': '命局中土气消耗，需补充生命能量。建议亲近自然，规律作息，以静制动，方可恢复元气。',
+    '人际关系': '食伤旺盛，口舌是非在所难免。低调行事，以诚相待，广结善缘，自然化解纷争。',
+    '方向迷茫': '命盘印星发动，此为蜕变前的迷茫期。静心思考，向内探寻，方向自会在某个清晨豁然开朗。',
+  };
+
+  // 心愿回应库
+  const wishResponses = [
+    '天道酬勤，您的心愿已被天机收录，只要坚持初心，水到渠成只是时间问题。',
+    '命中注定之事，无需强求；命中无有之事，无需强取。顺势而为，您所期望的终将到来。',
+    '星辰有感，善念必达。您怀揣的美好心愿，已在另一个维度悄然发芽，耐心等待花开。',
+    '所求之事，命盘已有回应。近期宜多行善事，积累福德，心愿实现指日可待。',
+  ];
+
+  const luckyWordsList = [
+    '厚德载物，自强不息\n顺势而为，万事可期',
+    '山高不碍白云飞\n海深难留明月归',
+    '花开自有花落时\n云卷云舒皆自然',
+    '积善之家必有余庆\n持正之人自得天助',
+    '知足常乐，随缘自在\n心若安然，处处是家',
+    '一念清净，烦恼皆消\n一步踏实，千里可至',
+    '风来疏竹，风过竹不留声\n雁渡寒潭，雁去潭不留影',
+    '上善若水，厚积薄发\n宁静致远，淡泊明志',
+  ];
+
+  const careerTexts = [
+    '此命格五行调和，事业运势稳中有升，宜把握今年下半年的贵人相助之机，主动出击，可望有所突破。财运方面有偏财入局，投资宜稳健保守，切忌冒进。',
+    '命局中印星旺盛，学识渊博为本命最大优势，适合从事文教、策划、研究等领域。今年行运逢吉，宜拓展人脉，机遇不可错过。',
+    '此格局事业宫得令，适合自主创业或独当一面。但需防小人口舌，行事低调为宜，切忌财不露白。',
+    '官杀混杂，事业压力较大，宜调整心态，以退为进。今年贵人星入命，可借助他人之力化解困局，逢凶化吉。',
+  ];
+  const loveTexts = {
+    '单身':   '桃花星入命宫，今年邂逅命中有缘人的概率极高，宜主动拓展社交圈，缘分就在转角处。',
+    '恋爱中': '红鸾星照命，感情进一步升温，双方磁场高度契合。今年有望推进关系，可认真考虑下一步。',
+    '已婚':   '夫妻宫得福星坐守，婚姻稳固美满。今年宜共同规划家庭蓝图，财运家运双双向好。',
+    '暧昧期': '感情线模糊，需一方主动打破僵局。命盘显示近期有明朗之机，勇敢表达，有好结果。',
+    '离异':   '命盘显示新的感情缘分已在路上，伤痛乃蜕变前奏。调整心态，相信自己值得更好的，新缘将至。',
+    '':       '感情宫星象活跃，缘分自来，顺其自然即可。',
+  };
+  const healthTexts = [
+    '今年健康整体平稳，但需注意肝胆及消化系统的保养，宜多饮水、规律作息、适当运动。秋季注意防范呼吸道疾病。',
+    '五行中水气偏旺，需防肾虚及腰椎不适，宜加强腰背锻炼。精神压力较大，建议培养冥想或瑜伽等放松习惯。',
+    '火土相生，身体能量充沛，但易上火，宜清淡饮食，多食蔬果。注意心脑血管健康，避免过度疲劳。',
+    '命局中金气较强，肺系需多加关注，雾霾天气注意防护。整体健康运势较好，保持积极心态即可。',
+  ];
+  const wealthTexts = [
+    '财帛宫有正财星坐守，财运稳健，适合稳健型投资理财。今年宜存蓄为主，下半年有一笔意外进项可期。',
+    '偏财星入局，今年有中奖或意外横财的可能，但切记守财要比赚财更重要，宜量入为出。',
+    '财星受克，理财需谨慎，避免盲目跟风投资。踏实工作、积累本业才是正道，财运将于明年逐步好转。',
+    '今年财运颇旺，正偏财兼得，事业与副业双线进财。宜把握上半年投资良机，适度扩张。',
+  ];
+  const studyTexts = [
+    '文昌星入命，学习运极旺，今年备考、进修、自我提升均逢吉，努力必有回报。',
+    '印星有力，记忆力与理解力出色，适合深度学习。今年可尝试考取资格证书，水到渠成。',
+  ];
+  const travelTexts = [
+    '驿马星动，今年出行运旺，宜多走动，异地他乡反而有贵人相助，或有意外收获。',
+    '出行需择日而行，方位宜东南，忌西北。整体出行平安，可趁此良机开拓眼界。',
+  ];
+
+  function hash(str) {
+    let h = 0;
+    for (let c of str) h = (h * 31 + c.charCodeAt(0)) & 0xffffffff;
+    return Math.abs(h);
+  }
+
+  function calcBazi(year, month, day, shichen) {
+    const base = 1864;
+    const yIdx = (year - base) % 60;
+    const nianGan = tianGan[((yIdx % 10) + 10) % 10];
+    const nianZhi = diZhi[((yIdx % 12) + 12) % 12];
+    const mGan = tianGan[((month + (year * 2)) % 10 + 10) % 10];
+    const mZhi = diZhi[((month + 1) % 12 + 12) % 12];
+    const dBase = Math.floor((year - 1900) * 365.25) + Math.floor((month - 1) * 30.6) + day;
+    const dGan = tianGan[(dBase % 10 + 10) % 10];
+    const dZhi = diZhi[(dBase % 12 + 12) % 12];
+    const shiIdx = diZhi.indexOf(shichen);
+    const sGan = tianGan[((shiIdx + Math.floor(dBase % 5) * 2) % 10 + 10) % 10];
+    return [
+      { zhu: '年柱', gan: nianGan, zhi: nianZhi },
+      { zhu: '月柱', gan: mGan, zhi: mZhi },
+      { zhu: '日柱', gan: dGan, zhi: dZhi },
+      { zhu: '时柱', gan: sGan, zhi: shichen },
+    ];
+  }
+
+  function calcWuxing(bazi) {
+    const counts = { '木':0,'火':0,'土':0,'金':0,'水':0 };
+    bazi.forEach(p => {
+      if (wuxingMap[p.gan]) counts[wuxingMap[p.gan]]++;
+      if (diZhiWuxing[p.zhi]) counts[diZhiWuxing[p.zhi]]++;
+    });
+    const total = Object.values(counts).reduce((a,b)=>a+b, 0);
+    return Object.fromEntries(Object.entries(counts).map(([k,v])=>[k, Math.round(v/total*100)]));
+  }
+
+  function getRand(arr, seed) {
+    return arr[seed % arr.length];
+  }
+
+  // ========== 主流程 ==========
+  function startFortune() {
+    const name = document.getElementById('name').value.trim();
+    const age = document.getElementById('age').value;
+    const gender = document.getElementById('gender').value;
+    const birthday = document.getElementById('birthday').value;
+    const shichen = document.getElementById('shichen').value;
+    const loveVal = getTagValues('tagLove')[0] || '';
+
+    if (!name || !age || !gender || !birthday || !shichen) {
+      alert('请填写所有必填信息（姓名、年龄、性别、生日、出生时辰）');
+      return;
+    }
+
+    const btn = document.getElementById('btnFortune');
+    const loading = document.getElementById('loading');
+    btn.style.display = 'none';
+    loading.classList.add('show');
+
+    setTimeout(() => {
+      loading.classList.remove('show');
+      btn.style.display = 'block';
+      showResult();
+    }, 2800);
+  }
+
+  function showResult() {
+    const name     = document.getElementById('name').value.trim();
+    const age      = document.getElementById('age').value;
+    const gender   = document.getElementById('gender').value;
+    const birthday = document.getElementById('birthday').value;
+    const shichen  = document.getElementById('shichen').value;
+    const blood    = document.getElementById('bloodtype').value;
+    const edu      = document.getElementById('education').value;
+    const selfScore    = document.getElementById('selfScore').value;
+    const moneyP   = document.getElementById('moneyPressure').value;
+    const wish     = document.getElementById('wish').value.trim();
+    const jobVals  = getTagValues('tagJob');
+    const focusVals= getTagValues('tagFocus');
+    const worryVals= getTagValues('tagWorry');
+    const personaVals = getTagValues('tagPersona');
+
+    const [year, month, day] = birthday.split('-').map(Number);
+    const seed = hash(name + birthday + shichen);
+    const zodiac = getZodiac(month, day);
+    const sx = getSx(year);
+
+    // 四柱 & 五行
+    const bazi = calcBazi(year, month, day, shichen);
+    const wx = calcWuxing(bazi);
+
+    // 评分：基础 + 自评加成
+    const basScore = 65 + (seed % 25);
+    const selfBonus = Math.round((parseInt(selfScore) - 5) * 0.8);
+    const score = Math.min(99, Math.max(50, basScore + selfBonus));
+
+    // 渲染头部
+    document.getElementById('resName').textContent = `${name} · ${gender}`;
+    document.getElementById('resMeta').textContent =
+      `${birthday} · ${shichen}时 · ${age}岁 · ${zodiac.icon}${zodiac.name}` +
+      (blood ? ` · ${blood}型` : '') + (edu ? ` · ${edu}` : '');
+
+    // 评分环
+    setTimeout(() => {
+      const arc = document.getElementById('scoreArc');
+      arc.style.strokeDashoffset = 289 - (289 * score / 100);
+    }, 100);
+    document.getElementById('scoreNum').textContent = score + '分';
+
+    // 四柱
+    const grid = document.getElementById('destinyGrid');
+    grid.innerHTML = bazi.map(p => `
+      <div class="destiny-item">
+        <div class="d-label">${p.zhu}</div>
+        <div class="d-value">${p.gan}${p.zhi}</div>
+        <div class="d-sub">${wuxingMap[p.gan]||''}·${diZhiWuxing[p.zhi]||''}</div>
+      </div>
+    `).join('');
+
+    // 额外三宫格
+    const luckyColor = ['红','蓝','绿','金','紫','白'][seed % 6];
+    const luckyNum = (seed % 9) + 1;
+    const luckyDir = ['东','南','西','北','东南','西南','东北','西北'][seed % 8];
+    document.getElementById('extraRow').innerHTML = `
+      <div class="extra-item">
+        <div class="ei-icon">${zodiac.icon}</div>
+        <div class="ei-label">星座</div>
+        <div class="ei-val">${zodiac.name}</div>
+      </div>
+      <div class="extra-item">
+        <div class="ei-icon">🐉</div>
+        <div class="ei-label">生肖</div>
+        <div class="ei-val">${sx}年</div>
+      </div>
+      <div class="extra-item">
+        <div class="ei-icon">🍀</div>
+        <div class="ei-label">幸运</div>
+        <div class="ei-val">${luckyColor}色·${luckyNum}·${luckyDir}</div>
+      </div>
+    `;
+
+    // 五行条
+    const wxContainer = document.getElementById('wuxingBars');
+    wxContainer.innerHTML = Object.entries(wx).map(([k, v]) => `
+      <div class="wuxing-item">
+        <span class="wuxing-label">${wuxingIcons[k]}${k}</span>
+        <div class="wuxing-bar-bg">
+          <div class="wuxing-bar" data-pct="${v}" style="background:${wuxingColors[k]};"></div>
+        </div>
+        <span class="wuxing-pct">${v}%</span>
+      </div>
+    `).join('');
+    setTimeout(() => {
+      document.querySelectorAll('.wuxing-bar').forEach(bar => {
+        bar.style.width = bar.dataset.pct + '%';
+      });
+    }, 200);
+
+    // 运势详解块：根据关注方向动态生成
+    const allBlocks = [
+      { key:'事业运', icon:'💼', text: getRand(careerTexts, seed) },
+      { key:'财运',   icon:'💰', text: getRand(wealthTexts, seed+1) },
+      { key:'感情运', icon:'❤️', text: loveTexts[''] },
+      { key:'健康运', icon:'🌿', text: getRand(healthTexts, seed+3) },
+      { key:'学业运', icon:'🎓', text: getRand(studyTexts, seed+4) },
+      { key:'出行运', icon:'🌍', text: getRand(travelTexts, seed+5) },
+    ];
+    // 若有勾选关注方向，优先展示，否则展示全部
+    const focusKeyMap = {'事业运':'事业运','感情运':'感情运','财运':'财运','健康运':'健康运','学业运':'学业运','出行运':'出行运'};
+    let showBlocks = allBlocks;
+    if (focusVals.length > 0) {
+      const mapped = focusVals.map(f => {
+        const k = Object.keys(focusKeyMap).find(key => f.includes(key.replace('运','')));
+        return k;
+      }).filter(Boolean);
+      if (mapped.length > 0) showBlocks = allBlocks.filter(b => mapped.includes(b.key));
+    }
+
+    let blocksHtml = showBlocks.map(b => `
+      <div class="fortune-block">
+        <div class="block-title">${b.icon} ${b.key}</div>
+        <div class="block-text">${b.text}</div>
+      </div>
+    `).join('');
+
+    // 血型分析（如有）
+    if (blood && bloodMap[blood]) {
+      blocksHtml += `
+        <div class="fortune-block">
+          <div class="block-title">🩸 血型运势（${blood}型）</div>
+          <div class="block-text">${bloodMap[blood]}</div>
+        </div>`;
+    }
+
+    // 困扰化解（如有）
+    if (worryVals.length > 0) {
+      worryVals.forEach(w => {
+        if (worryAdvice[w]) {
+          blocksHtml += `
+            <div class="fortune-block">
+              <div class="block-title">🧭 化解指引·${w}</div>
+              <div class="block-text">${worryAdvice[w]}</div>
+            </div>`;
+        }
+      });
+    }
+
+    // 心愿回应（如有）
+    if (wish) {
+      blocksHtml += `
+        <div class="fortune-block">
+          <div class="block-title">🌠 心愿感应</div>
+          <div class="block-text">您的心愿：「${wish}」<br><br>${getRand(wishResponses, seed+6)}</div>
+        </div>`;
+    }
+
+    document.getElementById('fortuneBlocks').innerHTML = blocksHtml;
+
+    // 吉言
+    document.getElementById('luckyWords').textContent = getRand(luckyWordsList, seed+7);
+
+    // 展示
+    document.getElementById('resultSection').classList.add('show');
+    document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function resetForm() {
+    document.getElementById('resultSection').classList.remove('show');
+    document.getElementById('formCard').scrollIntoView({ behavior: 'smooth' });
+    ['name','age','birthday','birthplace','wish'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    ['gender','shichen','bloodtype','education'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('zodiacBadge').innerHTML = '';
+    document.querySelectorAll('.tag-btn.active').forEach(b => b.classList.remove('active'));
+    ['selfScore','moneyPressure'].forEach(id => {
+      const el = document.getElementById(id);
+      el.value = id === 'selfScore' ? 6 : 5;
+      updateRange(el, id + 'Val');
+    });
+  }
+</script>
+</body>
+</html>
